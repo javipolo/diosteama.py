@@ -3,30 +3,24 @@
 import time
 import telepot
 from telepot.loop import MessageLoop
-import pypd
-import json
 import ConfigParser
 import os.path
-import pprint
 from plugins import load_plugins
 
 config_filenames = [ 'diosteama.ini', os.path.expanduser('~/.diosteama.ini'), '/etc/diosteama.ini' ]
-quote = '''
-<DrSlump> si yo fuera tia me pasaria l dia metiendome cosas por el co+o  <- y dejaria de tener el culo como un bebedero de patos
-
-        quote 17547 by CoSMiC on 03 Aug 2005 10:02:07
-'''
 
 def usage(plugins):
+    plugins_msg = list()
+    for key, data in plugins.items():
+        plugins_msg.append( '/%s : %s' % ( key, data['help_text'] ))
     usage = '''
-    Commands:
-    {}
+    Commands: 
+{}
 
     From inside a group you have to add @{} to the command. For example:
         /help@{}
-    '''.format('\n'.join(plugins),config['telegram']['botname'],config['telegram']['botname'])
+    '''.format('\n'.join(plugins_msg),config['telegram']['botname'],config['telegram']['botname'])
     return usage
-
 
 def handler(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
@@ -58,7 +52,6 @@ def parse_config():
             config[section][option] = Config.get(section, option)
     return config
 
-
 config = parse_config()
 
 print('Starting {}'.format(config['telegram']['botname']))
@@ -67,7 +60,6 @@ bot = telepot.Bot(config['telegram']['token'])
 MessageLoop(bot, handler).run_as_thread()
 
 try:
-    print load_plugins()
     while True:
         time.sleep(10)
 except KeyboardInterrupt:
