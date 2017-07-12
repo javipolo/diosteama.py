@@ -8,6 +8,7 @@ import json
 import ConfigParser
 import os.path
 import pprint
+from plugins import load_plugins
 
 config_filenames = [ 'diosteama.ini', os.path.expanduser('~/.diosteama.ini'), '/etc/diosteama.ini' ]
 quote = '''
@@ -16,34 +17,33 @@ quote = '''
         quote 17547 by CoSMiC on 03 Aug 2005 10:02:07
 '''
 
-def usage():
+def usage(plugins):
     usage = '''
     Commands:
-        /help       This help
-        /quote      Get a random quote
+    {}
 
     From inside a group you have to add @{} to the command. For example:
         /help@{}
-    '''.format(config['telegram']['botname'],config['telegram']['botname'])
+    '''.format('\n'.join(plugins),config['telegram']['botname'],config['telegram']['botname'])
     return usage
+
 
 def handler(msg):
     content_type, chat_type, chat_id = telepot.glance(msg)
     print(content_type, chat_type, chat_id, msg['text'])
 
+    plugins = load_plugins()
+
     if content_type == 'text':
         command = msg['text']
         command = command.split(' ')[0]
         command = command.split('@')[0]
-        if   command == '/quote':
-            text = 'Not implemented yet'
-        elif command == '/help':
-            text = usage()
-        elif command == '/start':
-            text = usage()
+        command = command.split('/', 1)[1]
+        if command in plugins:
+            text = plugins[command]['command']()
         else:
             text = 'Sorry, I don\'t understand what you mean by "{}"'.format(msg['text'])
-            text += usage()
+            text += usage(plugins)
         bot.sendMessage(chat_id,text)
 
 def parse_config():
@@ -67,7 +67,7 @@ bot = telepot.Bot(config['telegram']['token'])
 MessageLoop(bot, handler).run_as_thread()
 
 try:
-    bot.sendMessage(config['telegram']['chat_id'],quote)
+    print load_plugins()
     while True:
         time.sleep(10)
 except KeyboardInterrupt:
